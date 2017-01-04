@@ -15,8 +15,8 @@ from collections import OrderedDict
 import constants as const
 import helper
 
-TEST_URL = "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/job/rhv-master-ge-runner-tier2/12/"
-TEST_DST = "/home/alukiano/test_arc"
+TEST_URL = "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/view/4.1_dev/job/rhv-master-ge-runner-network/272/"
+TEST_DST = "/home/myakove/temp/art-test-logs"
 TEST_LOGS = ["vdsm.log", "engine.log", "supervdsm.log"]
 HOST_SPECIFIC_LOGS = ["vdsm.log", "supervdsm.log"]
 
@@ -357,6 +357,9 @@ class LogExtractor(object):
             if self._is_host_log(path=log):
                 search_pattern = '{0}/*_{1}*'
             log_files = glob.glob(search_pattern.format(self.dst, log))
+            if not log_files:
+                continue
+
             log_files = natsorted(log_files, reverse=True)
             if log == const.LOG_ENGINE:
                 log_files = natsorted(log_files)
@@ -436,8 +439,9 @@ class LogExtractor(object):
                             )
 
 
-# helper.download_artifact(job_url=TEST_URL, dst=TEST_DST)
+import ipdb;ipdb.set_trace()
+helper.download_artifact(job_url=TEST_URL, dst=TEST_DST)
 log_extractor = LogExtractor(TEST_DST, logs=TEST_LOGS)
-# log-extractor.extract_all(path=TEST_DST)
+log_extractor.extract_all(path=TEST_DST)
 log_extractor.parse_art_logs()
 log_extractor.parse_logs()
