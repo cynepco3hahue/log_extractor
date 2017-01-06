@@ -1,7 +1,11 @@
-"""
+#! /usr/bin/python
+# -*- coding: utf-8 -*-
 
 """
-# encoding=utf8
+Log extractor for Jenkins jobs
+"""
+
+
 import os
 import glob
 import tarfile
@@ -18,8 +22,6 @@ import click
 import constants as const
 import helper
 
-# TEST_URL = "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/view/4.1_dev/job/rhv-master-ge-runner-network/275"
-# TEST_DST = "/home/myakove/temp/art-test-logs"
 TEST_LOGS = ["vdsm.log", "engine.log", "supervdsm.log"]
 HOST_SPECIFIC_LOGS = ["vdsm.log", "supervdsm.log"]
 
@@ -484,10 +486,3 @@ def run(view, job, build, folder):
 
 if __name__ == "__main__":
     run()
-
-
-# helper.download_artifact(job_url=TEST_URL, dst=TEST_DST)
-# log_extractor = LogExtractor(TEST_DST, logs=TEST_LOGS)
-# log_extractor.extract_all(path=TEST_DST)
-# log_extractor.parse_art_logs()
-# log_extractor.parse_logs()
