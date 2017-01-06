@@ -7,16 +7,19 @@ import glob
 import tarfile
 import shutil
 import tempfile
+import user
+
 import pyunpack
 import datetime
 from natsort import natsorted
 from collections import OrderedDict
+import click
 
 import constants as const
 import helper
 
-TEST_URL = "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/view/4.1_dev/job/rhv-master-ge-runner-network/272/"
-TEST_DST = "/home/myakove/temp/art-test-logs"
+# TEST_URL = "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/view/4.1_dev/job/rhv-master-ge-runner-network/275"
+# TEST_DST = "/home/myakove/temp/art-test-logs"
 TEST_LOGS = ["vdsm.log", "engine.log", "supervdsm.log"]
 HOST_SPECIFIC_LOGS = ["vdsm.log", "supervdsm.log"]
 
@@ -439,9 +442,52 @@ class LogExtractor(object):
                             )
 
 
-import ipdb;ipdb.set_trace()
-helper.download_artifact(job_url=TEST_URL, dst=TEST_DST)
-log_extractor = LogExtractor(TEST_DST, logs=TEST_LOGS)
-log_extractor.extract_all(path=TEST_DST)
-log_extractor.parse_art_logs()
-log_extractor.parse_logs()
+@click.command()
+@click.option("--view", help="View where the job is", required=True)
+@click.option("--job", help="Job name", required=True)
+@click.option("--build", help="build number of the job")
+@click.option(
+    "--folder", help="Folder path to save the logs",
+    default=os.path.join(user.home, "art-tests-logs")
+)
+def run(view, job, build, folder):
+    """
+    Extract logs from Jenkins jobs.
+    """
+    # folder = os.path.join(folder, build)
+    if not os.path.exists(path=folder):
+        os.mkdir(folder)
+
+    view_folder = os.path.join(folder, view)
+    if not os.path.exists(path=view_folder):
+        os.mkdir(view_folder)
+
+    job_folder = os.path.join(view_folder, job)
+    if not os.path.exists(path=job_folder):
+        os.mkdir(job_folder)
+
+    build_folder = os.path.join(job_folder, build)
+    if not os.path.exists(path=build_folder):
+        os.mkdir(build_folder)
+
+    job_url = (
+        "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/view/{view}/"
+        "job/{job}/{build}".format(view=view, job=job, build=build)
+    )
+    helper.download_artifact(job_url=job_url, dst=build_folder)
+    log_extractor = LogExtractor(dst=build_folder, logs=TEST_LOGS)
+    log_extractor.extract_all(path=build_folder)
+    log_extractor.parse_art_logs()
+    log_extractor.parse_logs()
+    print "Logs was extracted to {folder}".format(folder=build_folder)
+
+
+if __name__ == "__main__":
+    run()
+
+
+# helper.download_artifact(job_url=TEST_URL, dst=TEST_DST)
+# log_extractor = LogExtractor(TEST_DST, logs=TEST_LOGS)
+# log_extractor.extract_all(path=TEST_DST)
+# log_extractor.parse_art_logs()
+# log_extractor.parse_logs()
