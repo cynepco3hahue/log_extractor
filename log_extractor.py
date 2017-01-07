@@ -8,11 +8,12 @@ Log extractor for Jenkins jobs
 
 import os
 import glob
+import ssl
 import tarfile
 import shutil
 import tempfile
 import user
-
+import jenkins as jenkins_api
 import pyunpack
 import datetime
 from natsort import natsorted
@@ -41,7 +42,7 @@ class Version(object):
 
 class LogExtractor(object):
     """
-
+    extract logs from Jenkins jobs
     """
     def __init__(self, dst, logs):
         self.dst = dst
@@ -52,12 +53,13 @@ class LogExtractor(object):
     @staticmethod
     def _is_archive(path):
         """
+        Check if file is archive
 
         Args:
-            path:
+            path (str): File path
 
         Returns:
-
+            bool: True if file is archive
         """
         f_ext = os.path.splitext(path)[1]
         return f_ext in const.ARCHIVE_EXTENSIONS or tarfile.is_tarfile(path)
@@ -92,7 +94,7 @@ class LogExtractor(object):
         return False
 
     @staticmethod
-    def _generate_host_log_name(path):
+    def _generate_host_log_name(path, dst):
         """
 
         Args:
@@ -111,9 +113,9 @@ class LogExtractor(object):
             if dir_name in ['logs', 'hosts-logs']:
                 next_dir = True
         f_new_basename = "{0}_{1}".format(prefix, f_basename)
-        return os.path.join(TEST_DST, f_new_basename)
+        return os.path.join(dst, f_new_basename)
 
-    def extract_all(self, path):
+    def extract_all(self, path, dst):
         """
 
         Args:
@@ -133,16 +135,16 @@ class LogExtractor(object):
                     )
                     f_path = dst_path
                     if os.path.isdir(f_path):
-                        self.extract_all(f_path)
+                        self.extract_all(f_path, dst)
                 if os.path.isfile(f_path) and self._is_relevant_file(f_path):
                     dst_path = os.path.join(self.dst, os.path.basename(f_path))
                     if self._is_host_log(f_path):
-                        dst_path = self._generate_host_log_name(f_path)
+                        dst_path = self._generate_host_log_name(f_path, dst)
                     if f_path != dst_path and not self._is_archive(f_path):
                         shutil.copy(f_path, dst_path)
             if dirs:
                 for dir_name in dirs:
-                    self.extract_all(dir_name)
+                    self.extract_all(dir_name, dst)
 
     @classmethod
     def _get_art_log_ts(cls, line):
@@ -445,40 +447,47 @@ class LogExtractor(object):
 
 
 @click.command()
-@click.option("--view", help="View where the job is", required=True)
 @click.option("--job", help="Job name", required=True)
-@click.option("--build", help="build number of the job")
+@click.option(
+    "--build", help="build number of the job", required=True, type=int
+)
 @click.option(
     "--folder", help="Folder path to save the logs",
     default=os.path.join(user.home, "art-tests-logs")
 )
-def run(view, job, build, folder):
+def run(job, build, folder):
     """
     Extract logs from Jenkins jobs.
     """
-    # folder = os.path.join(folder, build)
+    def get_jenkins_connection():
+        """
+        Get Jenkins connection object
+
+        Returns:
+            Jenkins: Jenkins connection
+        """
+        ssl._create_default_https_context = ssl._create_unverified_context
+        server = "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com"
+        return jenkins_api.Jenkins(url=server)
+
+    jenkins_connection = get_jenkins_connection()
+    build_info = jenkins_connection.get_build_info(name=job, number=build)
+    job_url = build_info.get("url")
+
     if not os.path.exists(path=folder):
         os.mkdir(folder)
 
-    view_folder = os.path.join(folder, view)
-    if not os.path.exists(path=view_folder):
-        os.mkdir(view_folder)
-
-    job_folder = os.path.join(view_folder, job)
+    job_folder = os.path.join(folder, job)
     if not os.path.exists(path=job_folder):
         os.mkdir(job_folder)
 
-    build_folder = os.path.join(job_folder, build)
+    build_folder = os.path.join(job_folder, str(build))
     if not os.path.exists(path=build_folder):
         os.mkdir(build_folder)
 
-    job_url = (
-        "https://rhev-jenkins.rhev-ci-vms.eng.rdu2.redhat.com/view/{view}/"
-        "job/{job}/{build}".format(view=view, job=job, build=build)
-    )
     helper.download_artifact(job_url=job_url, dst=build_folder)
     log_extractor = LogExtractor(dst=build_folder, logs=TEST_LOGS)
-    log_extractor.extract_all(path=build_folder)
+    log_extractor.extract_all(path=build_folder, dst=build_folder)
     log_extractor.parse_art_logs()
     log_extractor.parse_logs()
     print "Logs was extracted to {folder}".format(folder=build_folder)

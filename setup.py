@@ -18,6 +18,7 @@ setup(
         'Click',
         'pyunpack',
         'natsort',
+        'jenkinsapi',
     ],
     entry_points='''
         [console_scripts]
