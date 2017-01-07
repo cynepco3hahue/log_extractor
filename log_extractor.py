@@ -67,12 +67,13 @@ class LogExtractor(object):
     @staticmethod
     def _is_host_log(path):
         """
+        Check if file is host logs
 
         Args:
-            path:
+            path (str): File path
 
         Returns:
-
+            bool: True if file is host log
         """
         for pattern in HOST_SPECIFIC_LOGS:
             if pattern in path:
@@ -81,12 +82,13 @@ class LogExtractor(object):
 
     def _is_relevant_file(self, path):
         """
+        Check if file is log file that we want to process
 
         Args:
-            path:
+            path (str): File path
 
         Returns:
-
+            bool: True if file is relevant
         """
         for pattern in self.logs:
             if '/{0}'.format(pattern) in path:
@@ -97,11 +99,13 @@ class LogExtractor(object):
     def _generate_host_log_name(path, dst):
         """
 
+
         Args:
-            path:
+            path (str): File path
+            dst (str): New file destination
 
         Returns:
-
+            str: New file path
         """
         f_basename = os.path.basename(path)
         next_dir = False
@@ -117,12 +121,11 @@ class LogExtractor(object):
 
     def extract_all(self, path, dst):
         """
+        extract all archives
 
         Args:
-            path:
-
-        Returns:
-
+            path (str): File path
+            dst (str): Destination fto extract the file
         """
         for root, dirs, files in os.walk(path):
             for f in files:
