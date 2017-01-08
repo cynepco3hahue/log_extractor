@@ -125,7 +125,7 @@ class LogExtractor(object):
 
         Args:
             path (str): File path
-            dst (str): Destination fto extract the file
+            dst (str): Destination to extract the file
         """
         for root, dirs, files in os.walk(path):
             for f in files:
