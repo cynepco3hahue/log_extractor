@@ -460,7 +460,7 @@ def run(job, build, folder, logs, team):
             Jenkins: Jenkins connection
         """
         ssl._create_default_https_context = ssl._create_unverified_context
-        return jenkins_api.Jenkins(url=const.JENKINS_URL)
+        return jenkins_api.Jenkins(url=helper.get_jenkins_server())
 
     jenkins_connection = get_jenkins_connection()
     build_info = jenkins_connection.get_build_info(name=job, number=build)
