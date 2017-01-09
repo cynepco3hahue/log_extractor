@@ -441,12 +441,25 @@ class LogExtractor(object):
     "--build", help="build number of the job", required=True, type=int
 )
 @click.option(
-    "--folder", help="Folder path to save the logs",
+    "--folder",
+    help="Folder path to save the logs",
     default=os.path.join(user.home, "art-tests-logs")
 )
-@click.option("--logs", help="List of logs to parse(vdsm.log,engine.log,...)")
 @click.option(
-    "--team", type=click.Choice(const.TEAMS), help="Team logs to parse"
+    "--logs",
+    help=(
+        "List of logs to parse(vdsm.log,engine.log,...), "
+        "if you do not specify logs it will use default logs %s" %
+        const.DEFAULT_LOGS
+    )
+)
+@click.option(
+    "--team",
+    type=click.Choice(const.TEAMS),
+    help=(
+        "Team logs to parse, if you do not specify the "
+        "team it will parse log for all teams"
+    )
 )
 def run(job, build, folder, logs, team):
     """
